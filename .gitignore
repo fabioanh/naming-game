@@ -1,0 +1,4 @@
+*.zip
+*.lisp#
+.#*.lisp
+*.lx64fsl
