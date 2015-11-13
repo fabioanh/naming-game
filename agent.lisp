@@ -1,12 +1,11 @@
 ;; Definition of an agent for the gaming name
-
 (defpackage :agent
-  (:use :common-lisp)
+  (:use :common-lisp :user-params)
   (:export :agent))
 
 (in-package :agent)
 
-(defparameter *score-delta* 0.1)
+(defparameter *score-delta* *lateral-inhibition-delta*)
 (defparameter *max-score* 1.0)
 (defparameter *min-score* 0.0)
 
@@ -35,10 +34,12 @@
        (when (String= (meaning entry) meaning)
          (loop for ws in (word-scores entry) do
               (if (String= word (word ws))
-                  (when (< (score ws) *max-score*)
-                    (setf (score ws) (+ (score ws) *score-delta*)))
-                  (when (> (score ws) *min-score*)
-                    (setf (score ws) (- (score ws) *score-delta*))))))))
+                  (if (> (+ (score ws) *score-delta*) *max-score*)
+                      (setf (score ws) *max-score*)
+                      (setf (score ws) (+ (score ws) *score-delta*)))
+                  (if (< (- (score ws) *score-delta*) *min-score*)
+                      (setf (score ws) *min-score*)
+                      (setf (score ws) (- (score ws) *score-delta*))))))))
 
 ;; Method in charge of decreasing the score according to conditions after a failed game
 (defmethod update-score-failure ((agent agent) (meaning String) (word String))
@@ -46,7 +47,8 @@
   (loop for entry in (language-inventory agent) do
        (when (String= (meaning entry) meaning)
          (loop for ws in (word-scores entry)
-            when(String= word (word ws))
-            when (> (score ws) *min-score*) do
-              (setf (score ws) (- (score ws) *score-delta*))))))
+            when(String= word (word ws)) do
+              (if (< (- (score ws) *score-delta*) *min-score*)
+                  (setf (score ws) *min-score*)
+                  (setf (score ws) (- (score ws) *score-delta*)))))))
 
